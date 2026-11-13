@@ -1,0 +1,21 @@
+{
+  "name": "DAY DAW REC · Mobile Expo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "postCreateCommand": "cd mobile && npm install --no-audit --no-fund && npm install --global @expo/ngrok",
+  "forwardPorts": [
+    8081
+  ],
+  "portsAttributes": {
+    "8081": {
+      "label": "Expo Metro (local, tunnel recommended)",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
