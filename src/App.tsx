@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import DemoApp from "./DemoApp";
 
 type Role = "client" | "driver";
 type User = { id:string; full_name:string; phone:string; role:Role };
@@ -44,6 +45,7 @@ function Logo(){
   return <div className="brand"><span className="brand-icon">🚕</span><div><strong>DAY DAW <em>REC</em></strong><small>AMOUL ARRÊT · DAKAR</small></div></div>;
 }
 export default function App(){
+  const [demoMode,setDemoMode]=useState(false);
   const [me,setMe]=useState<Profile|null>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
@@ -156,6 +158,7 @@ export default function App(){
   });
   const active=rides.some(x=>["pending","accepted","arrived","onboard"].includes(x.status));
   const current=rides.find(x=>["pending","accepted","arrived","onboard"].includes(x.status));
+  if(demoMode)return <DemoApp onExit={()=>setDemoMode(false)}/>;
   return <div className="app-shell">
     <div className="app-phone">
       <header className="topbar"><Logo/><span className="prelaunch">PRÉLANCEMENT</span></header>
@@ -174,6 +177,7 @@ export default function App(){
           <button className="primary-btn" type="submit" disabled={busy}>{busy?"Vérification…":"Confirmer mon numéro"}</button>
           <button type="button" className="text-btn" onClick={()=>setStep("register")}>Modifier mon numéro</button>
         </form>}
+        <section className="demo-entry"><strong>Tester gratuitement, sans SMS</strong><p>Découvre les espaces Client et Chauffeur avec des trajets fictifs. Aucun paiement, aucune inscription.</p><button type="button" className="secondary-demo-btn" onClick={()=>{setError("");setMessage("");setDemoMode(true)}}>🚕 Ouvrir la démonstration</button></section>
         <p className="small-note">Service en préparation · Les SMS nécessitent l'activation du prestataire de vérification.</p>
       </main>:
       <>
