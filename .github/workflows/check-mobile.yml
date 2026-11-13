@@ -1,0 +1,27 @@
+name: Verify native mobile app
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/check-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+      - name: Check native TypeScript
+        working-directory: mobile
+        run: npm run check
+      - name: Bundle iOS JavaScript
+        working-directory: mobile
+        run: npx expo export --platform ios --output-dir dist-ci
