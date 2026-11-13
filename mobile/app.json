@@ -32,8 +32,7 @@
         {
           "locationWhenInUsePermission": "Autoriser DAY DAW REC à afficher votre position sur la carte."
         }
-      ],
-      "react-native-maps"
+      ]
     ],
     "owner": "diao-tech",
     "extra": {
