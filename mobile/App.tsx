@@ -154,7 +154,7 @@ function Screen() {
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <MapView
         ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={DAKAR}
         showsCompass={false}
         showsTraffic={false}
