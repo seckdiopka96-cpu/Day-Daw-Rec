@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "day-daw-rec-db",
-      "database_id": "REMPLACER_PAR_ID_D1",
+      "database_id": "30b35c58-203b-4555-821a-91c8295e7a55",
       "migrations_dir": "./migrations"
     }
   ]
