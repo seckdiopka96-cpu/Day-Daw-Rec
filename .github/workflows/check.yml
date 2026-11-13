@@ -15,5 +15,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check TypeScript
         run: npx tsc --noEmit
+      - name: Verify D1 migrations
+        run: python3 tests/test_migration.py
       - name: Build app
         run: npm run build
