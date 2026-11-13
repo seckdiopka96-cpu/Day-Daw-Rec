@@ -1,6 +1,9 @@
-name: D1 migration (manual only)
-run-name: D1 migration - ${{ inputs.mode }}
+name: D1 migration check
+run-name: D1 migration - ${{ github.event_name == 'push' && 'list' || inputs.mode }}
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/migrate-d1.yml']
   workflow_dispatch:
     inputs:
       mode:
@@ -38,7 +41,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler d1 migrations list day-daw-rec-db --remote
       - name: Apply migrations (explicit manual choice only)
-        if: ${{ inputs.mode == 'apply' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'apply' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
