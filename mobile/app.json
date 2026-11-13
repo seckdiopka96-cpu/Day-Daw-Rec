@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "DAY DAW REC",
+    "slug": "day-daw-rec",
+    "scheme": "daydawrec",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFFFF",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.diaotech.daydawrec",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "DAY DAW REC utilise votre position pour afficher le point de départ sur la carte et calculer un itinéraire."
+      }
+    },
+    "android": {
+      "package": "com.diaotech.daydawrec",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Autoriser DAY DAW REC à afficher votre position sur la carte."
+        }
+      ],
+      "react-native-maps"
+    ]
+  }
+}
