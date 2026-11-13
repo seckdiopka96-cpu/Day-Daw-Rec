@@ -18,12 +18,24 @@ Depuis `mobile/` avec Node.js et une machine pouvant lancer Expo :
 
 ```sh
 npm install
-npx expo start
+npx expo start --tunnel
 ```
 
-Ouvrir avec **Expo Go compatible SDK 57**, ou utiliser un développement build selon les versions iOS. Le code ne fonctionne pas simplement en ouvrant l'adresse du Worker dans Safari.
+Projet aligné sur **Expo SDK 54**, compatible avec la version Expo Go actuellement distribuée dans l'App Store iPhone. Le code ne fonctionne pas simplement en ouvrant l'adresse du Worker dans Safari.
 
 Le bouton `Voir l'itinéraire réel` contacte le serveur de démonstration OSRM. **Ne pas utiliser son API publique pour un service commercial** : avant le lancement, héberger OSRM ou souscrire à un fournisseur de routage et prévoir les limites et coûts.
+
+## Tester depuis un iPhone sans ordinateur (GitHub Codespaces)
+
+1. Depuis GitHub, ouvrir le dépôt `seckdiopka96-cpu/Day-Daw-Rec`.
+2. Dans **Code → Codespaces**, sélectionner **Create codespace on main**.
+3. Le fichier `.devcontainer/devcontainer.json` installe automatiquement les dépendances du dossier `mobile/` et `@expo/ngrok`.
+4. Dans le terminal Codespaces, saisir `cd mobile && npx expo login` et se connecter **avec le même compte Expo** que dans Expo Go, sans publier ses identifiants dans GitHub.
+5. Démarrer `npx expo start --tunnel` et ouvrir l'URL Expo produite dans Expo Go.
+
+Codespaces dispose d'un quota gratuit mensuel pour les comptes personnels GitHub, mais il n'est pas illimité ; arrêter le Codespace après les tests. Un serveur Expo actif est indispensable à Expo Go : associer seulement le dépôt GitHub au projet Expo ne publie pas automatiquement une application exécutable.
+
+Projet Expo : propriétaire `diao-tech`, slug `day-daw-rec`, identifiant `a42e0e3b-b7c9-45f7-b9e9-241dec96b474`.
 
 ## Validation
 ```sh
