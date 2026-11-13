@@ -34,6 +34,12 @@
         }
       ],
       "react-native-maps"
-    ]
+    ],
+    "owner": "diao-tech",
+    "extra": {
+      "eas": {
+        "projectId": "a42e0e3b-b7c9-45f7-b9e9-241dec96b474"
+      }
+    }
   }
 }
