@@ -1,5 +1,5 @@
 {
-  "name": "day-daw-rec",
+  "name": "day-daw-rec-api",
   "main": "src/worker.ts",
   "compatibility_date": "2026-11-12",
   "assets": {
