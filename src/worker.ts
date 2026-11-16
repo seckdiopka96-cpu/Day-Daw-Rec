@@ -41,8 +41,17 @@ async function digest(value: string) {
 function cookieValue(request: Request) {
   return /(?:^|;\s*)ddr_session=([a-f0-9]{64})(?:;|$)/i.exec(request.headers.get("Cookie") || "")?.[1] || "";
 }
+/** Native clients pass their 256-bit session using Authorization: Bearer.
+ * The browser continues using its HttpOnly SameSite cookie. Never fall back
+ * to a cookie if an Authorization header is supplied but invalid. */
+function sessionValue(request: Request) {
+  const authorization = request.headers.get("Authorization");
+  if (authorization !== null)
+    return /^Bearer ([a-f0-9]{64})$/.exec(authorization)?.[1] || "";
+  return cookieValue(request);
+}
 async function loggedIn(request: Request, db: D1Database): Promise<User | null> {
-  const session = cookieValue(request);
+  const session = sessionValue(request);
   if (!session) return null;
   const hash = await digest(session);
   return await db.prepare("SELECT u.id,u.full_name,u.phone,u.role FROM ddr_sessions s JOIN users u ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?")
@@ -83,26 +92,41 @@ async function throttle(db: D1Database, key: string, maximum: number): Promise<b
 }
 async function startRegistration(request: Request, env: Env, data: Payload) {
   if (!env.TWILIO_VERIFY_SERVICE_SID || !env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN)
-    return failure("L'envoi de SMS n'est pas encore activé par l'administrateur.", 503);
-  const phone = normalizePhone(data.phone), fullName = clean(data.full_name, 80);
-  const role = data.role === "client" || data.role === "driver" ? data.role : null;
-  const vehicle = role === "driver" ? clean(data.vehicle_type, 40) : "";
-  const plate = role === "driver" ? clean(data.license_plate, 30).toUpperCase() : "";
-  if (!role || !validPhone(phone) || fullName.length < 2 || fullName.length > 80 ||
-    (role === "driver" && (vehicle.length < 3 || plate.length < 3 || plate.length > 30)))
-    return failure("Vérifie ton nom, ton numéro sénégalais et les informations du véhicule.");
-  const existing = await env.DB.prepare("SELECT role FROM users WHERE phone=?").bind(phone).first<{role:Role}>();
-  if (existing && existing.role !== role) return failure("Ce numéro est déjà utilisé pour un autre type de compte.", 409);
+    return failure("L'envoi de SMS n'est pas encore activé par l'administrateur.",503);
+  const phone = normalizePhone(data.phone);
+  const role: Role | null = data.role==="client" || data.role==="driver" ? data.role : null;
+  const intent = data.intent==="login" ? "login" : "signup";
+  if (!role || !validPhone(phone)) return failure("Numéro de téléphone sénégalais invalide.");
+  const old = await env.DB.prepare("SELECT id,role,full_name FROM users WHERE phone=?")
+    .bind(phone).first<User>();
+  if (old && old.role!==role) return failure("Ce numéro est associé à un autre type de compte.",409);
+  if (intent==="login" && !old) return failure("Aucun compte trouvé. Choisis « Créer un compte ».",404);
+  if (intent==="signup" && old) return failure("Ce compte existe déjà. Choisis « Se connecter ».",409);
+  let fullName = clean(data.full_name,80);
+  let vehicle = role==="driver" ? clean(data.vehicle_type,40) : "";
+  let plate = role==="driver" ? clean(data.license_plate,30).toUpperCase() : "";
+  if (intent==="login" && old) {
+    fullName = old.full_name;
+    if (role==="driver") {
+      const driver = await env.DB.prepare("SELECT vehicle_type,license_plate FROM drivers WHERE user_id=?")
+        .bind(old.id).first<{vehicle_type:string|null;license_plate:string|null}>();
+      if (!driver) return failure("Profil chauffeur incomplet. Contacte l'assistance.",409);
+      vehicle = driver.vehicle_type || "";
+      plate = driver.license_plate || "";
+    }
+  }
+  if (fullName.length<2 || fullName.length>80 ||
+      (role==="driver" && (vehicle.length<3 || plate.length<3 || plate.length>30)))
+    return failure("Vérifie ton nom, ton numéro et les informations du véhicule.");
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  if (!await throttle(env.DB, "phone:" + phone, 4) || !await throttle(env.DB, "ip:" + ip, 25))
-    return failure("Trop de demandes. Réessaie plus tard.", 429);
+  if (!await throttle(env.DB,"phone:"+phone,4) || !await throttle(env.DB,"ip:"+ip,25))
+    return failure("Trop de demandes. Réessaie plus tard.",429);
   const now = Date.now();
   await env.DB.prepare("INSERT INTO ddr_phone_pending(phone,full_name,role,vehicle_type,license_plate,expires_at) VALUES(?,?,?,?,?,?) ON CONFLICT(phone) DO UPDATE SET full_name=excluded.full_name,role=excluded.role,vehicle_type=excluded.vehicle_type,license_plate=excluded.license_plate,expires_at=excluded.expires_at")
-    .bind(phone, fullName, role, vehicle || null, plate || null, now + 600000).run();
-  const verification = await sms(env, "Verifications", { To: phone, Channel: "sms" });
-  if (!verification || verification.status !== "pending")
-    return failure("Le SMS n'a pas pu être envoyé. Vérifie le service SMS.", 502);
-  return json({ ok: true, step: "sms_code_sent" });
+    .bind(phone,fullName,role,vehicle || null,plate || null,now+600000).run();
+  const verification = await sms(env,"Verifications",{To:phone,Channel:"sms"});
+  if (!verification || verification.status!=="pending") return failure("Le SMS n'a pas pu être envoyé. Vérifie le service SMS.",502);
+  return json({ok:true,step:"sms_code_sent"});
 }
 async function confirmRegistration(env: Env, data: Payload) {
   const phone = normalizePhone(data.phone), code = clean(data.code, 12);
@@ -110,6 +134,8 @@ async function confirmRegistration(env: Env, data: Payload) {
   const pending = await env.DB.prepare("SELECT * FROM ddr_phone_pending WHERE phone=? AND expires_at>?")
     .bind(phone, Date.now()).first<Pending>();
   if (!pending) return failure("Demande expirée. Recommence l'inscription.", 410);
+  // Prevent a client binary from storing a session for a driver account and vice versa.
+  if (data.native === true && data.role !== pending.role) return failure("Type de compte incompatible.",403);
   const result = await sms(env, "VerificationCheck", { To: phone, Code: code });
   if (!result || result.status !== "approved") return failure("Le code SMS est incorrect ou a expiré.", 401);
   const userId = crypto.randomUUID(), raw = token(), hash = await digest(raw);
@@ -123,8 +149,12 @@ async function confirmRegistration(env: Env, data: Payload) {
   queries.push(env.DB.prepare("INSERT INTO ddr_sessions(token_hash,user_id,expires_at) VALUES(?,?,?)").bind(hash,id,Date.now()+2592000000));
   queries.push(env.DB.prepare("DELETE FROM ddr_phone_pending WHERE phone=?").bind(phone));
   await env.DB.batch(queries);
-  return json({ ok:true, role:pending.role, pending_driver_review:pending.role==="driver" },
-    200, { "Set-Cookie":"ddr_session="+raw+"; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000" });
+  return json({
+    ok:true, role:pending.role, pending_driver_review:pending.role==="driver",
+    // Expose an opaque token only after a successful Twilio OTP check AND
+    // an explicit native login. It is stored in Keychain/Keystore, not plaintext.
+    ...(data.native === true ? {session_token:raw} : {})
+  },200,{ "Set-Cookie":"ddr_session="+raw+"; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000" });
 }
 async function me(request: Request, env: Env) {
   const user = await loggedIn(request, env.DB);
@@ -242,7 +272,7 @@ export default {
           if(pathname==="/api/auth/start")return await startRegistration(request,env,data);
           if(pathname==="/api/auth/confirm")return await confirmRegistration(env,data);
           if(pathname==="/api/auth/logout"){
-            const raw=cookieValue(request);
+            const raw=sessionValue(request);
             if(raw)await env.DB.prepare("DELETE FROM ddr_sessions WHERE token_hash=?").bind(await digest(raw)).run();
             return json({ok:true},200,{"Set-Cookie":"ddr_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"});
           }
