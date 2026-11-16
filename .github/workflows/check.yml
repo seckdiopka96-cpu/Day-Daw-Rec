@@ -17,5 +17,7 @@ jobs:
         run: npx tsc --noEmit
       - name: Verify D1 migrations
         run: python3 tests/test_migration.py
+      - name: Verify real Worker auth contract with fake D1 and Twilio
+        run: node --experimental-strip-types --test tests/native_auth.test.mjs
       - name: Build app
         run: npm run build
