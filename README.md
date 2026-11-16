@@ -1,5 +1,15 @@
 # DAY DAW REC — Amoul Arrêt 🚕
 
+## Étape 2 — Authentification mobile (code développé, validation terrain à faire)
+
+- Client et Chauffeur possèdent chacun une inscription et une connexion par téléphone sénégalais +221, vérification SMS Twilio Verify, consultation du vrai profil et déconnexion.
+- Le Worker continue de gérer les connexions web par cookie HttpOnly et reconnaît désormais les sessions natives via `Authorization: Bearer`, avec hash SHA-256 dans D1. Aucun identifiant Twilio ne figure dans le code mobile.
+- Sessions persistées dans Keychain / Android Keystore via `expo-secure-store` (SDK 54) ; un refus d'écriture sécurisée empêche la connexion de s'afficher comme réussie. La déconnexion supprime la session du serveur avant la copie locale.
+- Les nouveaux chauffeurs restent `approved=0` jusqu'à la vérification documentaire réelle. Pas de dispatch ni de paiements ouverts au public.
+- Tests techniques : `node --experimental-strip-types --test tests/native_auth.test.mjs` (simule Twilio et D1, sans envoyer de SMS) et workflow `check-mobile.yml`.
+
+**Avant le premier SMS réel :** déployer la version récente du Worker et configurer ses secrets Twilio dans Cloudflare. Vérifier que le compte Twilio peut envoyer des SMS au Sénégal, et que le coût et les conditions d'utilisation sont acceptables. Un test de compilation ne prouve pas que les SMS ont été livrés.
+
 ## Applications mobiles natives séparées
 
 **Deux applications indépendantes pour Android et iPhone**, reliées à terme au même backend Cloudflare :
