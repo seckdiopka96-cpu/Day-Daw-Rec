@@ -6,6 +6,8 @@ import {
 import * as Location from "expo-location";
 import MapView from "react-native-maps";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import AuthGate from "./src/AuthGate";
+import type { Profile } from "./src/auth";
 
 // Native driver app: no simulated online drivers, fabricated income or
 // unauthenticated GPS upload. Live dispatch is deliberately disabled.
@@ -30,7 +32,7 @@ const inServiceArea = (latitude: number, longitude: number) =>
   latitude > 14.45 && latitude < 15.25 &&
   longitude > -17.65 && longitude < -16.7;
 
-function DriverHome() {
+function DriverHome({profile,signOut}:{profile:Profile;signOut:()=>void}) {
   const insets = useSafeAreaInsets();
   const map = useRef<MapView>(null);
   const [gps, setGps] = useState<Gps>("idle");
@@ -101,7 +103,9 @@ function DriverHome() {
             <Text style={styles.brand}>DAY DAW REC</Text>
             <Text style={styles.brandSmall}>CHAUFFEUR · AMOUL ARRÊT</Text>
           </View>
-          <View style={styles.pilotBadge}><Text style={styles.pilotText}>PILOTE</Text></View>
+          <Pressable style={styles.pilotBadge} onPress={signOut} accessibilityRole="button" accessibilityLabel="Se déconnecter">
+            <Text style={styles.pilotText}>SORTIR</Text>
+          </Pressable>
         </View>
         <View style={styles.offlinePill}>
           <View style={styles.offlineDot} />
@@ -125,10 +129,10 @@ function DriverHome() {
         <View style={styles.handle} />
         <View style={styles.sheetTop}>
           <View>
-            <Text style={styles.eyebrow}>BONJOUR, CHAUFFEUR</Text>
+            <Text style={styles.eyebrow} numberOfLines={1}>BONJOUR {profile.user.full_name.toUpperCase()}</Text>
             <Text style={styles.title}>Prêt à prendre la route ?</Text>
           </View>
-          <View style={styles.verifiedPlaceholder}><Text style={styles.verifiedText}>Compte à vérifier</Text></View>
+          <View style={styles.verifiedPlaceholder}><Text style={styles.verifiedText}>{profile.driver?.approved?"Compte validé":"Compte à vérifier"}</Text></View>
         </View>
 
         <View style={styles.stats}>
@@ -178,7 +182,9 @@ function DriverHome() {
 }
 
 export default function App() {
-  return <SafeAreaProvider><DriverHome /></SafeAreaProvider>;
+  return <SafeAreaProvider><AuthGate role="driver">
+    {(profile,signOut)=><DriverHome profile={profile} signOut={signOut}/>}
+  </AuthGate></SafeAreaProvider>;
 }
 
 const styles = StyleSheet.create({
