@@ -10,7 +10,7 @@ Ce dossier contient **une véritable application React Native**, séparée du si
 - Interface native mobile avec panneau de réservation et bascule Client/Chauffeur.
 - Aucune position transmise au serveur pendant la préversion.
 
-**Important :** Ce n'est PAS encore une app de transport commerciale. Les courses réellement enregistrées, les vrais chauffeurs, les paiements, le suivi et l'inscription sécurisée seront connectés au backend Cloudflare D1 après avoir terminé et testé les flux. Ne pas afficher de chauffeurs fictifs comme s'ils étaient réellement disponibles.
+**Important :** Ce n'est PAS encore une app de transport commerciale. L'inscription et la connexion natives sont reliées dans le code au backend Cloudflare D1 via Twilio Verify (SMS réel, si les secrets Twilio sont configurés et l'API déployée). Les courses réellement enregistrées, les paiements et le suivi restent désactivés. Ne pas afficher de chauffeurs fictifs comme s'ils étaient réellement disponibles.
 
 ## Lancer sur iPhone/Android pour développer
 
@@ -47,4 +47,14 @@ npx expo export --platform ios
 ## Publication
 Une application téléchargeable devra être construite et signée séparément pour iPhone et Android (par exemple via Expo EAS Build ou un environnement de développement natif). La publication sur l'App Store/Play Store a des exigences et frais indépendants de Cloudflare.
 
-Le projet conserve le backend `https://day-daw-rec-api.seckdiopka96.workers.dev`, mais **aucune authentification mobile ni course commerciale n'est encore connectée**.
+Le projet conserve le backend `https://day-daw-rec-api.seckdiopka96.workers.dev`, et contient désormais un client d'authentification natif (SMS OTP, session Bearer sauvegardée avec Expo SecureStore). **La réussite des SMS réels dépend de la configuration Twilio et du déploiement de l'API.** Aucune course commerciale n'est encore connectée.
+
+## Connexion Client native
+
+- Deux options : créer un compte (nom et numéro +221) ou se connecter (numéro existant).
+- Les SMS passent par Twilio Verify côté Worker ; aucune clé Twilio n'est intégrée à l'app.
+- Vérification OTP avec session opaque longue de 256 bits, stockée dans Expo SecureStore (Keychain/Keystore), puis reprise au prochain lancement ; déconnexion révoque la session sur D1.
+- Les comptes « client » ne peuvent pas se connecter dans l'application Chauffeur et inversement.
+- Le Worker doit être déployé avec les variables `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` comme **secrets Cloudflare**. Ne jamais mettre les identifiants dans GitHub.
+- L'app demande la localisation seulement après authentification et le consentement GPS.
+- Essais de bout en bout avec de vrais numéros sénégalais indispensables avant la mise en ligne.
