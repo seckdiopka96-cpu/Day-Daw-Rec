@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "DAY DAW REC Chauffeur",
+    "slug": "day-daw-rec-chauffeur",
+    "scheme": "daydawrecdriver",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F3F6F3",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.diaotech.daydawrec.chauffeur",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "DAY DAW REC Chauffeur affiche votre position pendant que vous utilisez l'application. La position n'est pas envoyée au serveur dans cette préversion."
+      }
+    },
+    "android": {
+      "package": "com.diaotech.daydawrec.chauffeur",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Autoriser DAY DAW REC Chauffeur à afficher votre position uniquement lorsque vous utilisez l'application."
+        }
+      ]
+    ],
+    "owner": "diao-tech"
+  }
+}
