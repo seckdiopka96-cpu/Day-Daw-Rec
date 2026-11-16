@@ -95,7 +95,8 @@ async function startRegistration(request: Request, env: Env, data: Payload) {
     return failure("L'envoi de SMS n'est pas encore activé par l'administrateur.",503);
   const phone = normalizePhone(data.phone);
   const role: Role | null = data.role==="client" || data.role==="driver" ? data.role : null;
-  const intent = data.intent==="login" ? "login" : "signup";
+  // Preserve existing web login-by-OTP requests that omit "intent".
+  const intent = data.intent==="login" ? "login" : data.intent==="signup" ? "signup" : "legacy";
   if (!role || !validPhone(phone)) return failure("Numéro de téléphone sénégalais invalide.");
   const old = await env.DB.prepare("SELECT id,role,full_name FROM users WHERE phone=?")
     .bind(phone).first<User>();
