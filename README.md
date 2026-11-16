@@ -1,4 +1,16 @@
 # DAY DAW REC — Amoul Arrêt 🚕
+
+## Applications mobiles natives séparées
+
+**Deux applications indépendantes pour Android et iPhone**, reliées à terme au même backend Cloudflare :
+
+- **Client** — `mobile/`, identifiant `com.diaotech.daydawrec`. Vraie carte de Dakar, GPS, calcul d'itinéraire routier de test ; commandes réelles non activées.
+- **Chauffeur** — `chauffeur/`, identifiant `com.diaotech.daydawrec.chauffeur`. Carte native, GPS au premier plan sur demande, tableau de bord, état hors ligne et documents à valider ; courses réelles non activées.
+
+Les deux projets restent sous le contrôle de Diao-Tech, avec des fichiers `app.json` et versions propres. L'application Chauffeur ne doit **pas** réutiliser l'identifiant EAS de Client. Aucun chauffeur n'est approuvé automatiquement et aucune localisation n'est envoyée au backend par ces maquettes mobiles.
+
+**Vérification :** GitHub Actions `.github/workflows/check-mobile.yml` contrôle TypeScript et export iOS pour les deux applications. Pour tester, ouvrir chacun des dossiers dans un environnement Expo séparé. La publication sur les stores nécessite des builds signés.
+
 Application indépendante de mise en relation clients/chauffeurs pour la région de Dakar, Sénégal. Le code et la base Cloudflare D1 restent sous le contrôle du propriétaire.
 
 ## État actuel : pré-lancement, non ouvert aux courses commerciales
