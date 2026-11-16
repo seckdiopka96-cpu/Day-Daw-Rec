@@ -149,8 +149,21 @@ async function confirmRegistration(env: Env, data: Payload) {
   queries.push(env.DB.prepare("INSERT INTO ddr_sessions(token_hash,user_id,expires_at) VALUES(?,?,?)").bind(hash,id,Date.now()+2592000000));
   queries.push(env.DB.prepare("DELETE FROM ddr_phone_pending WHERE phone=?").bind(phone));
   await env.DB.batch(queries);
+  const driver = pending.role==="driver"
+    ? await env.DB.prepare("SELECT approved,is_available,vehicle_type,license_plate FROM drivers WHERE user_id=?")
+        .bind(id).first<{approved:number;is_available:number;vehicle_type:string|null;license_plate:string|null}>()
+    : null;
+  const verifiedUser: User = {id,full_name:old?.id
+    ? (await env.DB.prepare("SELECT full_name FROM users WHERE id=?").bind(id).first<{full_name:string}>())?.full_name || pending.full_name
+    : pending.full_name,phone,role:pending.role};
   return json({
-    ok:true, role:pending.role, pending_driver_review:pending.role==="driver",
+    ok:true, role:pending.role, pending_driver_review:pending.role==="driver" && !driver?.approved,
+    ...(data.native===true ? {
+      profile:{user:verifiedUser,driver:driver ? {
+        approved:driver.approved===1,is_available:driver.is_available===1,
+        vehicle_type:driver.vehicle_type,license_plate:driver.license_plate
+      } : null}
+    } : {}),
     // Expose an opaque token only after a successful Twilio OTP check AND
     // an explicit native login. It is stored in Keychain/Keystore, not plaintext.
     ...(data.native === true ? {session_token:raw} : {})
