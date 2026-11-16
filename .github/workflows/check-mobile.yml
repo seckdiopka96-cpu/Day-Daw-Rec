@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'mobile/**'
+      - 'chauffeur/**'
       - '.github/workflows/check-mobile.yml'
   workflow_dispatch:
 permissions:
@@ -24,4 +25,13 @@ jobs:
         run: npm run check
       - name: Bundle iOS JavaScript
         working-directory: mobile
+        run: npx expo export --platform ios --output-dir dist-ci
+      - name: Install chauffeur dependencies
+        working-directory: chauffeur
+        run: npm install --no-audit --no-fund
+      - name: Check chauffeur TypeScript
+        working-directory: chauffeur
+        run: npm run check
+      - name: Bundle chauffeur iOS JavaScript
+        working-directory: chauffeur
         run: npx expo export --platform ios --output-dir dist-ci
