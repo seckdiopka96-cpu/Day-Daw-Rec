@@ -9,7 +9,6 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { DAKAR, PLACES, inDakar, type GeoPoint, type Place } from "./src/places";
 import { getTestRoadRoute, type Route } from "./src/routing";
 
-type Mode = "client" | "driver";
 const COLORS = {
   ink: "#183329", green: "#127B50", dark: "#103C2D",
   lemon: "#FFCC41", muted: "#74877B", line: "#E5EBE6", background: "#FFFFFF",
@@ -23,7 +22,6 @@ const gpsLabel = (position: GeoPoint | null, hasPermission: boolean) => {
 function Screen() {
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
-  const [mode, setMode] = useState<Mode>("client");
   const [position, setPosition] = useState<GeoPoint | null>(null);
   const [pickup, setPickup] = useState<GeoPoint | null>(null);
   const [destination, setDestination] = useState<Place | null>(null);
@@ -98,7 +96,6 @@ function Screen() {
   };
 
   const pressMap = (event: MapPressEvent) => {
-    if (mode !== "client") return;
     const chosen = event.nativeEvent.coordinate;
     if (!inDakar(chosen)) {
       setNotice("Les départs doivent se situer dans la région de Dakar.");
@@ -209,21 +206,7 @@ function Screen() {
 
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 12) + 13 }]}>
         <View style={styles.handle} />
-        <View style={styles.modeSwitch}>
-          <Pressable
-            onPress={() => setMode("client")}
-            style={[styles.modeButton, mode === "client" && styles.modeActive]}
-            accessibilityRole="button"
-          ><Text style={[styles.modeText, mode === "client" && styles.modeTextActive]}>👤 Client</Text></Pressable>
-          <Pressable
-            onPress={() => setMode("driver")}
-            style={[styles.modeButton, mode === "driver" && styles.modeActive]}
-            accessibilityRole="button"
-          ><Text style={[styles.modeText, mode === "driver" && styles.modeTextActive]}>🚘 Chauffeur</Text></Pressable>
-        </View>
-
-        {mode === "client" ? (
-          <>
+        <>
             <Text style={styles.heading}>Où allons-nous ?</Text>
             <View style={styles.addressRow}>
               <View style={styles.dot} />
@@ -274,23 +257,7 @@ function Screen() {
             {route && <Pressable style={styles.secondaryButton} onPress={notYetAvailable}>
               <Text style={styles.secondaryButtonText}>Réserver une voiture (prochainement)</Text>
             </Pressable>}
-          </>
-        ) : (
-          <>
-            <Text style={styles.heading}>Espace chauffeur</Text>
-            <Text style={styles.driverDescription}>Suivez votre emplacement sur la carte. L'envoi des positions et l'attribution de vraies courses nécessitent un compte chauffeur validé.</Text>
-            <View style={styles.driverStatus}>
-              <Text style={styles.driverStatusTitle}>● {gpsAllowed ? "Localisation autorisée" : "GPS non autorisé"}</Text>
-              <Text style={styles.routeNote}>Aucune course ni position envoyée au serveur</Text>
-            </View>
-            <Pressable style={styles.primaryButton} onPress={() => void recenter()}>
-              <Text style={styles.primaryButtonText}>📍 Afficher ma position</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton} onPress={notYetAvailable}>
-              <Text style={styles.secondaryButtonText}>Activer les courses réelles (prochainement)</Text>
-            </Pressable>
-          </>
-        )}
+        </>
         <Text style={styles.footer}>PRÉVERSION NATIVE · PAS ENCORE OUVERTE AUX COURSES COMMERCIALES</Text>
       </View>
     </View>
