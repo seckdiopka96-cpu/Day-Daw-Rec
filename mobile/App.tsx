@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator, Alert, Platform, Pressable, ScrollView, StatusBar,
+  ActivityIndicator, Alert, Pressable, ScrollView, StatusBar,
   StyleSheet, Text, View,
 } from "react-native";
 import * as Location from "expo-location";
@@ -8,6 +8,8 @@ import MapView, { Marker, Polyline, type MapPressEvent } from "react-native-maps
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { DAKAR, PLACES, inDakar, type GeoPoint, type Place } from "./src/places";
 import { getTestRoadRoute, type Route } from "./src/routing";
+import AuthGate from "./src/AuthGate";
+import type { UserProfile } from "./src/auth";
 
 const COLORS = {
   ink: "#183329", green: "#127B50", dark: "#103C2D",
@@ -19,7 +21,7 @@ const gpsLabel = (position: GeoPoint | null, hasPermission: boolean) => {
   return "Position sur la carte";
 };
 
-function Screen() {
+function Screen({user,signOut}:{user:UserProfile;signOut:()=>void}) {
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
   const [position, setPosition] = useState<GeoPoint | null>(null);
@@ -187,9 +189,11 @@ function Screen() {
           <View style={styles.logo}><Text style={styles.logoText}>D</Text></View>
           <View style={styles.brandText}>
             <Text style={styles.brandName}>DAY DAW <Text style={styles.brandAccent}>REC</Text></Text>
-            <Text style={styles.brandSubtitle}>AMOUL ARRÊT · DAKAR</Text>
+            <Text style={styles.brandSubtitle} numberOfLines={1}>BONJOUR {user.full_name.toUpperCase()}</Text>
           </View>
-          <View style={styles.tag}><Text style={styles.tagText}>NATIVE</Text></View>
+          <Pressable onPress={signOut} style={styles.tag} accessibilityRole="button" accessibilityLabel="Se déconnecter">
+              <Text style={styles.tagText}>SORTIR</Text>
+            </Pressable>
         </View>
       </View>
 
@@ -265,7 +269,9 @@ function Screen() {
 }
 
 export default function App() {
-  return <SafeAreaProvider><Screen /></SafeAreaProvider>;
+  return <SafeAreaProvider><AuthGate role="client">
+    {({user},signOut)=><Screen user={user} signOut={signOut}/>}
+  </AuthGate></SafeAreaProvider>;
 }
 
 const styles = StyleSheet.create({
